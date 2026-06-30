@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>L.R.I. — Lethality Research Institute</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg0:#0a0610;
+  --bg1:#120a1c;
+  --purple:#9b3df0;
+  --purple-dim:#5a2b8a;
+  --purple-glitch:#ff2bd6;
+  --text:#c9b8e8;
+  --line:#2a1a3d;
+  --warn:#ff4d4d;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg0);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;}
+body{
+  background-image:
+    repeating-linear-gradient(0deg, rgba(155,61,240,0.02) 0px, rgba(155,61,240,0.02) 1px, transparent 1px, transparent 3px);
+}
+a{color:var(--purple);text-decoration:none;}
+::selection{background:var(--purple-glitch);color:#000;}
+
+/* glitch text effect */
+.glitch{
+  position:relative;
+  display:inline-block;
+  color:var(--purple);
+  text-shadow:0 0 2px var(--purple-glitch);
+}
+.glitch::before, .glitch::after{
+  content:attr(data-text);
+  position:absolute;
+  left:0;top:0;width:100%;
+  overflow:hidden;
+  opacity:0.7;
+}
+.glitch::before{
+  color:var(--purple-glitch);
+  clip-path:inset(0 0 60% 0);
+  animation:glitchTop 2.5s infinite linear alternate-reverse;
+}
+.glitch::after{
+  color:#5be0ff;
+  clip-path:inset(60% 0 0 0);
+  animation:glitchBot 3.1s infinite linear alternate-reverse;
+}
+@keyframes glitchTop{
+  0%{transform:translate(0,0);}
+  20%{transform:translate(-2px,-1px);}
+  40%{transform:translate(2px,1px);}
+  60%{transform:translate(-1px,1px);}
+  80%{transform:translate(1px,-1px);}
+  100%{transform:translate(0,0);}
+}
+@keyframes glitchBot{
+  0%{transform:translate(0,0);}
+  25%{transform:translate(2px,1px);}
+  50%{transform:translate(-2px,-1px);}
+  75%{transform:translate(1px,-2px);}
+  100%{transform:translate(0,0);}
+}
+
+header{
+  border-bottom:1px solid var(--line);
+  padding:14px 20px;
+  background:linear-gradient(180deg, var(--bg1), var(--bg0));
+  position:sticky;top:0;z-index:50;
+}
+.logo{font-size:1.3em;font-weight:bold;letter-spacing:2px;}
+.logo small{display:block;font-size:0.5em;color:var(--purple-dim);letter-spacing:4px;}
+nav{
+  display:flex;gap:10px;flex-wrap:wrap;
+  justify-content:center;
+  position:sticky;bottom:0;left:0;right:0;z-index:50;
+  padding:10px 14px;
+  background:linear-gradient(0deg, var(--bg1), var(--bg0));
+  border-top:1px solid var(--line);
+}
+nav a{
+  padding:8px 14px;
+  border:1px solid var(--line);
+  font-size:0.85em;
+  letter-spacing:1px;
+  transition:.15s;
+}
+nav a:hover, nav a.active{
+  border-color:var(--purple);
+  background:rgba(155,61,240,0.08);
+  color:var(--purple-glitch);
+}
+
+main{max-width:980px;margin:0 auto;padding:30px 18px 30px;}
+
+.map-wrap{
+  border:1px solid var(--purple-dim);
+  background:
+    linear-gradient(rgba(155,61,240,0.06) 1px, transparent 1px) 0 0/100% 12.5%,
+    linear-gradient(90deg, rgba(155,61,240,0.06) 1px, transparent 1px) 0 0/4.1666% 100%,
+    radial-gradient(ellipse at 50% 50%, #150a22, #0a0410);
+  position:relative;
+  width:100%;
+  aspect-ratio:2/1;
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.map-dot{
+  position:absolute;
+  width:10px;height:10px;
+  background:var(--purple-glitch);
+  border-radius:50%;
+  box-shadow:0 0 8px var(--purple-glitch), 0 0 2px #fff;
+  transform:translate(-50%,-50%);
+  cursor:pointer;
+}
+.map-dot::after{
+  content:'';
+  position:absolute;
+  inset:-6px;
+  border:1px solid var(--purple-glitch);
+  border-radius:50%;
+  opacity:0.6;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{
+  0%{transform:scale(0.6);opacity:0.8;}
+  100%{transform:scale(2.2);opacity:0;}
+}
+.map-tip{
+  position:absolute;
+  background:#0d0814;
+  border:1px solid var(--purple-glitch);
+  padding:6px 8px;
+  font-size:0.7em;
+  color:var(--text);
+  white-space:nowrap;
+  transform:translate(-50%,-130%);
+  pointer-events:none;
+  z-index:10;
+  display:none;
+}
+.map-dot:hover .map-tip{display:block;}
+.map-axis-label{
+  position:absolute;
+  font-size:0.6em;
+  color:var(--purple-dim);
+  letter-spacing:1px;
+}
+
+.crt-note{font-size:0.7em;color:var(--purple-dim);text-align:center;margin-top:40px;letter-spacing:1px;}
+
+h1,h2,h3{color:var(--purple);letter-spacing:1px;}
+h1{font-size:2.6em;margin-bottom:8px;}
+@media(max-width:600px){h1{font-size:1.8em;}}
+hr{border:none;border-top:1px dashed var(--line);margin:24px 0;}
+
+.card{
+  border:1px solid var(--line);
+  background:rgba(155,61,240,0.03);
+  padding:16px;
+  margin-bottom:16px;
+  position:relative;
+}
+.card:hover{border-color:var(--purple-dim);}
+.card .meta{font-size:0.75em;color:var(--purple-dim);margin-bottom:6px;letter-spacing:1px;}
+.card .tag{
+  display:inline-block;
+  border:1px solid var(--purple-dim);
+  color:var(--purple-glitch);
+  font-size:0.65em;
+  padding:2px 6px;
+  margin-right:6px;
+  letter-spacing:1px;
+}
+.card .reco{
+  margin-top:10px;
+  padding:8px;
+  border-left:2px solid var(--purple-glitch);
+  font-size:0.85em;
+  color:var(--text);
+  background:rgba(255,43,214,0.05);
+}
+
+form{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+input,textarea,select{
+  background:#0d0814;
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:10px;
+  font-family:inherit;
+  font-size:0.9em;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--purple);}
+label{font-size:0.75em;color:var(--purple-dim);letter-spacing:1px;}
+button{
+  background:var(--purple-dim);
+  color:#eee0ff;
+  border:1px solid var(--purple);
+  padding:10px 14px;
+  cursor:pointer;
+  letter-spacing:1px;
+  font-family:inherit;
+}
+button:hover{background:var(--purple);color:#000;}
+
+.section-title{
+  display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--line);
+  padding-bottom:6px;margin-bottom:16px;
+}
+
+/* cube page */
+.cube-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  padding:30px 0;
+  position:relative;
+  min-height:420px;
+}
+.cube-stage{
+  width:680px;height:420px;
+  perspective:900px;
+  position:relative;
+  margin-bottom:30px;
+}
+.cube-aura{
+  position:absolute;
+  left:50%;top:50%;
+  width:360px;height:360px;
+  margin-left:-180px;margin-top:-180px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,43,214,0.45) 0%, rgba(155,61,240,0.28) 25%, rgba(91,43,138,0.12) 50%, transparent 75%);
+  filter:blur(6px);
+  animation:auraPulse 4s ease-in-out infinite;
+  pointer-events:none;
+  z-index:1;
+}
+@keyframes auraPulse{
+  0%,100%{transform:scale(0.92);opacity:0.7;}
+  50%{transform:scale(1.18);opacity:1;}
+}
+.cube-glow-wrap{
+  width:220px;height:220px;
+  position:absolute;
+  left:50%;top:50%;
+  margin-left:-110px;margin-top:-110px;
+  z-index:50;
+  filter:drop-shadow(0 0 25px rgba(255,43,214,0.85)) drop-shadow(0 0 55px rgba(155,61,240,0.6));
+}
+.cube{
+  width:220px;height:220px;
+  position:relative;
+  transform-style:preserve-3d;
+  animation:spin 7s infinite linear;
+  cursor:pointer;
+}
+.cube:active{animation-play-state:paused;}
+.cube-face{
+  position:absolute;
+  width:220px;height:220px;
+  background-image:
+    linear-gradient(45deg, #ff00ff 25%, transparent 25%, transparent 75%, #ff00ff 75%),
+    linear-gradient(45deg, #ff00ff 25%, #000000 25%, #000000 75%, #ff00ff 75%);
+  background-size:55px 55px;
+  background-position:0 0, 27.5px 27.5px;
+  image-rendering:pixelated;
+  border:2px solid #000;
+  box-shadow:inset 0 0 0 2px #ff00ff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4em;font-weight:bold;color:#000;
+  text-shadow:0 0 4px #fff, 0 0 8px #ff00ff;
+}
+.f-front{transform:translateZ(110px);}
+.f-back{transform:translateZ(-110px) rotateY(180deg);}
+.f-right{transform:rotateY(90deg) translateZ(110px);}
+.f-left{transform:rotateY(-90deg) translateZ(110px);}
+.f-top{transform:rotateX(90deg) translateZ(110px);}
+.f-bottom{transform:rotateX(-90deg) translateZ(110px);}
+@keyframes spin{
+  0%{transform:rotateX(0) rotateY(0);}
+  100%{transform:rotateX(360deg) rotateY(720deg);}
+}
+.orbit-word{
+  position:absolute;
+  font-size:0.7em;
+  color:var(--purple-dim);
+  letter-spacing:1px;
+  white-space:nowrap;
+  pointer-events:none;
+  text-shadow:0 0 4px var(--purple);
+}
+.coord-box{
+  border:1px solid var(--purple-dim);
+  padding:16px;
+  width:100%;
+  max-width:420px;
+  text-align:center;
+  margin-bottom:16px;
+}
+.coord-box .val{color:var(--purple-glitch);font-size:1.1em;letter-spacing:1px;}
+.small-btn{font-size:0.75em;padding:6px 10px;}
+.flicker{animation:flick 4s infinite;}
+@keyframes flick{
+  0%,97%,100%{opacity:1;}
+  98%{opacity:0.4;}
+  99%{opacity:0.85;}
+}
+.empty{color:var(--purple-dim);font-style:italic;padding:20px 0;}
+footer{text-align:center;padding:20px;font-size:0.7em;color:var(--purple-dim);border-top:1px solid var(--line);letter-spacing:1px;}
+.danger{color:var(--warn);}
+@media(max-width:600px){
+  nav{gap:8px;}
+  nav a{font-size:0.75em;padding:5px 8px;}
+  .cube-stage{transform:scale(0.55);margin-bottom:-90px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="glitch" data-text="L.R.I.">L.R.I.</span>
+    <small>LETHALITY RESEARCH INSTITUTE</small>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<nav id="nav">
+  <a href="#home" data-route="home">MAIN</a>
+  <a href="#forum" data-route="forum">FORUM</a>
+  <a href="#products" data-route="products">PRODUCTS</a>
+  <a href="#map" data-route="map">MAP</a>
+  <a href="#locate" data-route="locate">LOCATE</a>
+</nav>
+
+<footer class="flicker">L.R.I. // UNVERIFIED FIELD DATA // POST AT YOUR OWN RISK // EST. UNKNOWN</footer>
+
+<script>
+// ---------- DATA LAYER ----------
+const LS_POSTS = 'lri_posts';
+const LS_PRODUCTS = 'lri_products';
+
+function load(key, fallback){
+  try{ const v = JSON.parse(localStorage.getItem(key)); return v || fallback; }catch(e){ return fallback; }
+}
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+let posts = load(LS_POSTS, []);
+let products = load(LS_PRODUCTS, []);
+
+// seed default products if empty
+if(products.length === 0){
+  products = [
+    {id:cryptoId(), name:"UV-7 TRIPWIRE FLARE", desc:"Trip-activated UV flare for marking unstable structures or entities in low light.", tags:["FIELD GEAR","LIGHT"], url:"#"},
+    {id:cryptoId(), name:"GEIGER-LITE POCKET", desc:"Compact radiation reader. Cheap, loud, occasionally accurate.", tags:["DETECTION"], url:"#"},
+    {id:cryptoId(), name:"SALT-LINE PELLETS", desc:"Pre-measured pellet packs for rapid perimeter marking.", tags:["CONTAINMENT"], url:"#"},
+    {id:cryptoId(), name:"THERMAL SCRAWL CAM", desc:"Thermal imaging attachment, logs anomalies automatically.", tags:["IMAGING"], url:"#"}
+  ];
+  save(LS_PRODUCTS, products);
+}
+if(posts.length === 0){
+  posts = [
+    {id:cryptoId(), title:"ABANDONED GRAIN SILO — SECTOR 9", author:"anon_walker", body:"Found heavy scratching on interior walls, roughly 7ft up. No animal tracks. Temperature drop near the east ladder of approx 8°F. Did not stay past dusk.", tags:["STRUCTURE","COLD ZONE"], lat:41.8781, lng:-87.6298, ts:Date.now()-86400000, reco:"UV-7 TRIPWIRE FLARE", recoSrc:"L.R.I."},
+    {id:cryptoId(), title:"UNDERPASS ENTITY — REPEAT SIGHTING", author:"k.dren", body:"Second report this month of a tall, thin figure near the south underpass after midnight. No sound. Disappears when lights point directly at it.", tags:["ENTITY","URBAN"], lat:51.5074, lng:-0.1278, ts:Date.now()-43200000, reco:"THERMAL SCRAWL CAM", recoSrc:"L.R.I."}
+  ];
+  save(LS_POSTS, posts);
+}
+
+function cryptoId(){ return 'x'+Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+
+const RECO_POOL = products.length ? products : [];
+function pickReco(){
+  if(!products.length) return null;
+  return products[Math.floor(Math.random()*products.length)];
+}
+
+// ---------- ROUTER ----------
+const app = document.getElementById('app');
+const navLinks = document.querySelectorAll('#nav a');
+
+function setActiveNav(route){
+  navLinks.forEach(a=>a.classList.toggle('active', a.dataset.route===route));
+}
+
+function route(){
+  const hash = location.hash.replace('#','') || 'home';
+  setActiveNav(hash);
+  if(hash === 'home') renderHome();
+  else if(hash === 'forum') renderForum();
+  else if(hash === 'products') renderProducts();
+  else if(hash === 'map') renderMap();
+  else if(hash === 'locate') renderLocate();
+  else renderHome();
+}
+window.addEventListener('hashchange', route);
+
+function timeAgo(ts){
+  const diff = Math.floor((Date.now()-ts)/1000);
+  if(diff<60) return diff+'s ago';
+  if(diff<3600) return Math.floor(diff/60)+'m ago';
+  if(diff<86400) return Math.floor(diff/3600)+'h ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+// ---------- HOME ----------
+function renderHome(){
+  const latestPosts = [...posts].sort((a,b)=>b.ts-a.ts).slice(0,4);
+  const latestProducts = [...products].slice(-4).reverse();
+
+  app.innerHTML = `
+    <h1 class="glitch" data-text="WELCOME, FIELD ASSET.">WELCOME, FIELD ASSET.</h1>
+    <p style="color:var(--purple-dim)">Unverified reports from the field. Recommendations generated from product database. Proceed with caution.</p>
+    <hr>
+    <div class="section-title"><h2>LATEST REPORTS</h2><a href="#forum">view all →</a></div>
+    <div id="home-posts"></div>
+    <div class="section-title"><h2>LATEST PRODUCTS</h2><a href="#products">view all →</a></div>
+    <div id="home-products" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+  `;
+  const hp = document.getElementById('home-posts');
+  if(latestPosts.length===0){ hp.innerHTML = '<div class="empty">No reports filed yet.</div>'; }
+  latestPosts.forEach(p=> hp.appendChild(postCard(p)));
+
+  const hpr = document.getElementById('home-products');
+  latestProducts.forEach(pr=> hpr.appendChild(productCard(pr)));
+}
+
+function postCard(p){
+  const div = document.createElement('div');
+  div.className = 'card';
+  const locStr = (p.lat!=null && p.lng!=null) ? `LAT ${p.lat.toFixed(4)}, LNG ${p.lng.toFixed(4)}` : 'LOCATION UNLOGGED';
+  div.innerHTML = `
+    <div class="meta">${escapeHtml(p.author)} // ${timeAgo(p.ts)} // ${locStr}</div>
+    <h3>${escapeHtml(p.title)}</h3>
+    <div>${(p.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+    <p>${escapeHtml(p.body)}</p>
+    ${p.reco ? `<div class="reco">RECOMMENDED: <strong>${escapeHtml(p.reco)}</strong> <span style="color:var(--purple-dim)">— ${escapeHtml(p.recoSrc||'L.R.I.')}</span></div>` : ''}
+  `;
+  return div;
+}
+
+function productCard(pr){
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <div class="meta">${(pr.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+    <h3>${escapeHtml(pr.name)}</h3>
+    <p>${escapeHtml(pr.desc)}</p>
+    <a href="${escapeHtml(pr.url||'#')}" target="_blank">view item →</a>
+  `;
+  return div;
+}
+
+function escapeHtml(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ---------- FORUM ----------
+function renderForum(){
+  app.innerHTML = `
+    <h1 class="glitch" data-text="FORUM">FORUM</h1>
+    <p style="color:var(--purple-dim)">Post a report. Submitting a report will auto-recommend gear from the product database.</p>
+    <form id="post-form">
+      <label>HANDLE</label>
+      <input type="text" id="p-author" placeholder="anon_walker" required>
+      <label>TITLE</label>
+      <input type="text" id="p-title" placeholder="e.g. ABANDONED FACTORY — NORTH WING" required>
+      <label>TAGS (comma separated)</label>
+      <input type="text" id="p-tags" placeholder="ENTITY, STRUCTURE, COLD ZONE">
+      <label>REPORT</label>
+      <textarea id="p-body" rows="5" placeholder="Describe what you found..." required></textarea>
+      <button type="submit">FILE REPORT</button>
+    </form>
+    <hr>
+    <div class="section-title"><h2>ALL REPORTS (${posts.length})</h2></div>
+    <div id="forum-posts"></div>
+  `;
+  const fp = document.getElementById('forum-posts');
+  const sorted = [...posts].sort((a,b)=>b.ts-a.ts);
+  if(sorted.length===0) fp.innerHTML = '<div class="empty">No reports filed yet. Be the first.</div>';
+  sorted.forEach(p=> fp.appendChild(postCard(p)));
+
+  document.getElementById('post-form').addEventListener('submit', e=>{
+    e.preventDefault();
+    const author = document.getElementById('p-author').value.trim() || 'anon';
+    const title = document.getElementById('p-title').value.trim();
+    const body = document.getElementById('p-body').value.trim();
+    const tags = document.getElementById('p-tags').value.split(',').map(t=>t.trim().toUpperCase()).filter(Boolean);
+    if(!title || !body) return;
+
+    let lat=null, lng=null;
+    const pending = load('lri_pending_coords', null);
+    if(pending){ lat=pending.lat; lng=pending.lng; localStorage.removeItem('lri_pending_coords'); }
+
+    const reco = pickReco();
+    const newPost = {
+      id: cryptoId(), title, author, body, tags, lat, lng, ts: Date.now(),
+      reco: reco ? reco.name : null, recoSrc: 'L.R.I.'
+    };
+    posts.push(newPost);
+    save(LS_POSTS, posts);
+    renderForum();
+    location.hash = 'forum';
+  });
+}
+
+// ---------- PRODUCTS ----------
+function renderProducts(){
+  app.innerHTML = `
+    <h1 class="glitch" data-text="PRODUCTS">PRODUCTS</h1>
+    <p style="color:var(--purple-dim)">Items recommended to field assets based on reports. Submit your own item below.</p>
+    <form id="prod-form">
+      <label>ITEM NAME</label>
+      <input type="text" id="pr-name" required placeholder="e.g. EMF DOWSER MK2">
+      <label>DESCRIPTION</label>
+      <textarea id="pr-desc" rows="3" required placeholder="What does it do?"></textarea>
+      <label>TAGS (comma separated)</label>
+      <input type="text" id="pr-tags" placeholder="DETECTION, FIELD GEAR">
+      <label>LINK (optional)</label>
+      <input type="text" id="pr-url" placeholder="https://...">
+      <button type="submit">ADD ITEM</button>
+    </form>
+    <hr>
+    <div class="section-title"><h2>ALL ITEMS (${products.length})</h2></div>
+    <div id="prod-list" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+  `;
+  const list = document.getElementById('prod-list');
+  if(products.length===0) list.innerHTML='<div class="empty">No items yet.</div>';
+  [...products].reverse().forEach(pr=> list.appendChild(productCard(pr)));
+
+  document.getElementById('prod-form').addEventListener('submit', e=>{
+    e.preventDefault();
+    const name = document.getElementById('pr-name').value.trim();
+    const desc = document.getElementById('pr-desc').value.trim();
+    const tags = document.getElementById('pr-tags').value.split(',').map(t=>t.trim().toUpperCase()).filter(Boolean);
+    const url = document.getElementById('pr-url').value.trim() || '#';
+    if(!name || !desc) return;
+    products.push({id:cryptoId(), name, desc, tags, url});
+    save(LS_PRODUCTS, products);
+    renderProducts();
+  });
+}
+
+// ---------- MAP ----------
+function renderMap(){
+  const located = posts.filter(p=> p.lat!=null && p.lng!=null);
+  app.innerHTML = `
+    <h1 class="glitch" data-text="MAP">MAP</h1>
+    <p style="color:var(--purple-dim)">Logged coordinates from filed reports. ${located.length} of ${posts.length} reports have a location attached.</p>
+    <div class="map-wrap" id="map-wrap"></div>
+    <div class="section-title"><h2>LOCATED REPORTS (${located.length})</h2></div>
+    <div id="map-list"></div>
+  `;
+  const wrap = document.getElementById('map-wrap');
+
+  // axis labels
+  ['90°N','0°','90°S'].forEach((lbl,i)=>{
+    const el = document.createElement('div');
+    el.className = 'map-axis-label';
+    el.textContent = lbl;
+    el.style.left = '4px';
+    el.style.top = (i*50)+'%';
+    wrap.appendChild(el);
+  });
+  ['180°W','0°','180°E'].forEach((lbl,i)=>{
+    const el = document.createElement('div');
+    el.className = 'map-axis-label';
+    el.textContent = lbl;
+    el.style.top = '2px';
+    el.style.left = (i*50)+'%';
+    wrap.appendChild(el);
+  });
+
+  located.forEach(p=>{
+    const xPct = ((p.lng + 180) / 360) * 100;
+    const yPct = ((90 - p.lat) / 180) * 100;
+    const dot = document.createElement('div');
+    dot.className = 'map-dot';
+    dot.style.left = xPct + '%';
+    dot.style.top = yPct + '%';
+    dot.innerHTML = `<div class="map-tip">${escapeHtml(p.title)}<br>${p.lat.toFixed(3)}, ${p.lng.toFixed(3)}</div>`;
+    dot.addEventListener('click', ()=>{ location.hash='forum'; });
+    wrap.appendChild(dot);
+  });
+
+  const listEl = document.getElementById('map-list');
+  if(located.length===0){ listEl.innerHTML = '<div class="empty">No reports with logged coordinates yet. Use LOCATE before filing a report.</div>'; }
+  located.sort((a,b)=>b.ts-a.ts).forEach(p=> listEl.appendChild(postCard(p)));
+}
+
+// ---------- LOCATE (cube page) ----------
+const ORBIT_WORDS = ['UNKNOWN','SIGNAL LOST','ENTITY','COORDINATES','STATIC','DO NOT APPROACH','LOGGED','ANOMALY','???','TEXTURE_MISSING','FIELD ASSET','TRIANGULATING'];
+
+function renderLocate(){
+  app.innerHTML = `
+    <div class="cube-wrap">
+      <h1 class="glitch" data-text="LOCATE">LOCATE</h1>
+      <p style="color:var(--purple-dim);text-align:center;max-width:500px;">Click the cube while at the location you want to log. Coordinates will be attached to your next report.</p>
+      <div class="cube-stage" id="cube-stage">
+        <div class="cube-aura"></div>
+        <div class="cube-glow-wrap">
+        <div class="cube" id="the-cube">
+          <div class="cube-face f-front">?</div>
+          <div class="cube-face f-back">?</div>
+          <div class="cube-face f-right">?</div>
+          <div class="cube-face f-left">?</div>
+          <div class="cube-face f-top">?</div>
+          <div class="cube-face f-bottom">?</div>
+        </div>
+        </div>
+      </div>
+      <div class="coord-box" id="coord-box">
+        <div>STATUS: <span class="val" id="coord-status">AWAITING INPUT</span></div>
+      </div>
+      <button class="small-btn" id="clear-coord">CLEAR LOGGED COORDS</button>
+    </div>
+  `;
+
+  // orbiting words
+  const stage = document.getElementById('cube-stage');
+  ORBIT_WORDS.forEach((word,i)=>{
+    const el = document.createElement('div');
+    el.className = 'orbit-word';
+    el.textContent = word;
+    stage.appendChild(el);
+    animateOrbit(el, i, ORBIT_WORDS.length);
+  });
+
+  const pending = load('lri_pending_coords', null);
+  if(pending){
+    document.getElementById('coord-status').textContent = `LOGGED ${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)} — will attach to next report`;
+  }
+
+  document.getElementById('the-cube').addEventListener('click', ()=>{
+    const statusEl = document.getElementById('coord-status');
+    statusEl.textContent = 'TRIANGULATING...';
+    if(!navigator.geolocation){
+      statusEl.innerHTML = '<span class="danger">GEOLOCATION UNSUPPORTED</span>';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      save('lri_pending_coords', {lat, lng});
+      statusEl.textContent = `LOGGED ${lat.toFixed(5)}, ${lng.toFixed(5)} — will attach to next report`;
+    }, err=>{
+      statusEl.innerHTML = `<span class="danger">SIGNAL LOST: ${escapeHtml(err.message)}</span>`;
+    }, {enableHighAccuracy:true, timeout:10000});
+  });
+
+  document.getElementById('clear-coord').addEventListener('click', ()=>{
+    localStorage.removeItem('lri_pending_coords');
+    document.getElementById('coord-status').textContent = 'AWAITING INPUT';
+  });
+}
+
+function animateOrbit(el, index, total){
+  const radiusX = 320;
+  const radiusY = 120;
+  const baseAngle = (index/total) * 360;
+  const speed = 18; // seconds per full rotation
+  let start = null;
+  function frame(ts){
+    if(!start) start = ts;
+    const t = (ts-start)/1000;
+    const angle = (baseAngle + t*(360/speed)) * Math.PI/180;
+    const x = 340 + radiusX*Math.cos(angle) - el.offsetWidth/2;
+    const y = 210 + radiusY*Math.sin(angle) - 8;
+    const depth = (Math.sin(angle)+1)/2; // 0 = back, 1 = front
+    el.style.transform = `translate(${x}px, ${y}px) scale(${0.7+depth*0.5})`;
+    el.style.opacity = 0.35 + depth*0.65;
+    el.style.zIndex = Math.round(depth*100);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+route();
+</script>
+</body>
+</html>
